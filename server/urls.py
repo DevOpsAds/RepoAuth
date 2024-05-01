@@ -1,9 +1,36 @@
-from django.urls import re_path
+from django.urls import path, include
+from django.contrib import admin
 
-from . import views
 
+from django.contrib.auth.models import User
+from rest_framework import routers, serializers, viewsets
+from django.views.decorators.csrf import csrf_exempt
+from rest_framework.authtoken.views import obtain_auth_token
+from rest_framework_simplejwt.views import TokenVerifyView
+
+# Serializers define the API representation.
+class UserSerializer(serializers.HyperlinkedModelSerializer):
+    class Meta:
+        model = User
+        fields = ['url', 'username', 'email', 'is_staff']
+
+# ViewSets define the view behavior.
+class UserViewSet(viewsets.ModelViewSet):
+    queryset = User.objects.all()
+    serializer_class = UserSerializer
+
+# Routers provide an easy way of automatically determining the URL conf.
+router = routers.DefaultRouter()
+router.register(r'users', UserViewSet)
+
+# Wire up our API using automatic URL routing.
+# Additionally, we include login URLs for the browsable API.
 urlpatterns = [
-    re_path('signup', views.signup),
-    re_path('login', views.login),
-    re_path('test_token', views.test_token),
+    path('admin/', admin.site.urls),
+    path('', include(router.urls)),
+    path('api-auth/login/', csrf_exempt(obtain_auth_token)),
+    path('api-auth/', include('rest_framework.urls', namespace='rest_framework')),
+    path('api/token/verify/', TokenVerifyView.as_view(), name='token_verify'),
 ]
+
+
